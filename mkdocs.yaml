@@ -1,0 +1,46 @@
+site_name: Zig-Learn
+site_dir: site
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+repo_url: https://github.com/llawn/zig-learn
+theme:
+  name: material
+  features:
+    - content.code.copy
+    - navigation.tabs
+    - navigation.sections
+  palette:
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: orange
+      accent: deep-orange
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: orange
+      accent: deep-orange
+      toggle:
+        icon: material/brightness-4
+        name: Switch to system preference
+extra_css:
+  - custom.css
+nav:
+  - Home: index.md
+  - Data Structures:
+    - Linear Structures: data_structures/linear.md
+    - Arrays: data_structures/01_linear/01_arrays.md
+    - Linked Lists: data_structures/01_linear/02_linked_list.md
+  - Algorithms: algorithms.md
+  - Design Patterns: patterns.md
+  - Practice Projects: projects.md
+  - Resources: resources.md
