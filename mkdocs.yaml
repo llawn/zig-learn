@@ -4,6 +4,7 @@ markdown_extensions:
   - admonition
   - attr_list
   - md_in_html
+  - tables
   - pymdownx.caret
   - pymdownx.critic
   - pymdownx.details
@@ -12,7 +13,11 @@ markdown_extensions:
   - pymdownx.keys
   - pymdownx.mark
   - pymdownx.snippets
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.tabbed
   - pymdownx.tilde
 repo_url: https://github.com/llawn/zig-learn
