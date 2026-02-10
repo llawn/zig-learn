@@ -2,15 +2,33 @@ site_name: Zig-Learn
 site_dir: site
 markdown_extensions:
   - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - pymdownx.caret
+  - pymdownx.critic
   - pymdownx.details
-  - pymdownx.superfences
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
   - pymdownx.highlight
   - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed
+  - pymdownx.tilde
 repo_url: https://github.com/llawn/zig-learn
 theme:
   name: material
   features:
     - content.code.copy
+    - content.code.select
     - navigation.tabs
     - navigation.sections
   palette:
@@ -37,9 +55,9 @@ extra_css:
 nav:
   - Home: index.md
   - Data Structures:
-    - Linear Structures: data_structures/linear.md
-    - Arrays: data_structures/01_linear/01_arrays.md
-    - Linked Lists: data_structures/01_linear/02_linked_list.md
+      - Linear Structures: data_structures/linear.md
+      - Arrays: data_structures/01_linear/01_arrays.md
+      - Linked Lists: data_structures/01_linear/02_linked_list.md
   - Algorithms: algorithms.md
   - Design Patterns: patterns.md
   - Practice Projects: projects.md
