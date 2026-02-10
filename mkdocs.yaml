@@ -5,6 +5,8 @@ markdown_extensions:
   - attr_list
   - md_in_html
   - tables
+  - pymdownx.arithmatex:
+      generic: true
   - pymdownx.caret
   - pymdownx.critic
   - pymdownx.details
@@ -50,8 +52,13 @@ theme:
       toggle:
         icon: material/brightness-4
         name: Switch to system preference
+extra_javascript:
+  - javascripts/katex.js
+  - https://unpkg.com/katex@0/dist/katex.min.js
+  - https://unpkg.com/katex@0/dist/contrib/auto-render.min.js
 extra_css:
   - custom.css
+  - https://unpkg.com/katex@0/dist/katex.min.css
 nav:
   - Home: index.md
   - Data Structures:
