@@ -1,3 +1,9 @@
+<div align="center">
+  <a href="https://ziglang.org/">
+    <img src="https://ziglang.org/img/zig-logo-dynamic.svg" width="100" height="100" alt="Zig Logo">
+  </a>
+</div>
+
 [![Zig](https://img.shields.io/badge/Zig-%23F7A41D.svg?style=for-the-badge&logo=zig&logoColor=white)](https://ziglang.org/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/llawn/zig-learn?style=for-the-badge&logo=github)](https://github.com/llawn/zig-learn)
