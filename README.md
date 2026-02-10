@@ -34,7 +34,7 @@ This repository serves as a personal laboratory.
 
 ### Linear Structures
 
-#### - [ ] Arrays
+#### 1. Arrays
 
 - [x] **Static Arrays**: Fixed-size, contiguous memory
 - [x] **Dynamic Arrays**: Resizable, memory management
@@ -67,7 +67,7 @@ This repository serves as a personal laboratory.
 
 ### Tree Structures
 
-#### - [ ] Binary Trees
+#### 1. Binary Trees
 
 - [ ] **Binary Search Trees**: Ordered key-value pairs
 - [ ] **AVL Trees**: Self-balancing with rotations
@@ -101,7 +101,7 @@ This repository serves as a personal laboratory.
 
 ### Graph Structures
 
-#### - [ ] Graph Representations
+#### 1. Graph Representations
 
 - [ ] **Adjacency Matrix**: O(- [ ] edge existence
 - [ ] **Adjacency Lists**: Space-efficient sparse graphs
@@ -145,7 +145,7 @@ This repository serves as a personal laboratory.
 
 ### Specialized Structures
 
-#### - [ ] Geometric Structures
+#### 1. Geometric Structures
 
 - [ ] **Quad Trees**: 2D spatial partitioning
 - [ ] **Oct Trees**: 3D spatial partitioning
@@ -173,7 +173,7 @@ This repository serves as a personal laboratory.
 
 ### Sorting Algorithms
 
-#### - [ ] Comparison Sorts
+#### 1. Comparison Sorts
 
 - [ ] **Bubble Sort**: O(n²) educational
 - [ ] **Insertion Sort**: Nearly sorted data
@@ -202,7 +202,7 @@ This repository serves as a personal laboratory.
 
 ### Searching Algorithms
 
-#### - [ ] Linear Search
+#### 1. Linear Search
 
 - [ ] **Sequential Search**: O(n) complexity
 - [ ] **Jump Search**: Step-optimized linear
@@ -228,7 +228,7 @@ This repository serves as a personal laboratory.
 
 ### Graph Algorithms
 
-#### - [ ] Traversal Algorithms
+#### 1. Traversal Algorithms
 
 - [ ] **Depth-First Search**: Stack-based exploration
 - [ ] **Breadth-First Search**: Queue-based exploration
@@ -270,7 +270,7 @@ This repository serves as a personal laboratory.
 
 ### Dynamic Programming
 
-#### - [ ] Classic DP Problems
+#### 1. Classic DP Problems
 
 - [ ] **Fibonacci Sequence**: Optimal substructure
 - [ ] **Knapsack Problem**: Resource allocation
@@ -314,7 +314,7 @@ This repository serves as a personal laboratory.
 
 ### Divide and Conquer
 
-#### - [ ] Classic Algorithms
+#### 1. Classic Algorithms
 
 - [ ] **Merge Sort**: Divide-merge paradigm
 - [ ] **Quick Sort**: Partitioning strategy
@@ -332,7 +332,7 @@ This repository serves as a personal laboratory.
 
 ### String Algorithms
 
-#### - [ ] Pattern Matching
+#### 1. Pattern Matching
 
 - [ ] **Knuth-Morris-Pratt**: Prefix function
 - [ ] **Boyer-Moore**: Reverse scanning
@@ -350,7 +350,7 @@ This repository serves as a personal laboratory.
 
 ### Mathematical Algorithms
 
-#### - [ ] Number Theory
+#### 1. Number Theory
 
 - [ ] **GCD Algorithms**: Euclidean, extended
 - [ ] **Prime Testing**: Miller-Rabin, deterministic
@@ -378,7 +378,7 @@ This repository serves as a personal laboratory.
 
 ### Creational Patterns
 
-#### - [ ] Singleton Pattern
+#### 1. Singleton Pattern
 
 - [ ] **Purpose**: Ensure single instance globally
 - [ ] **Use Cases**: Configuration managers, connection pools
@@ -415,7 +415,7 @@ This repository serves as a personal laboratory.
 
 ### Structural Patterns
 
-#### - [ ] Adapter Pattern
+#### 1. Adapter Pattern
 
 - [ ] **Purpose**: Make incompatible interfaces work together
 - [ ] **Use Cases**: Legacy code integration, format conversion
@@ -466,7 +466,7 @@ This repository serves as a personal laboratory.
 
 ### Behavioral Patterns
 
-#### - [ ] Strategy Pattern
+#### 1. Strategy Pattern
 
 - [ ] **Purpose**: Define family of algorithms, make them interchangeable
 - [ ] **Use Cases**: Sorting algorithms, compression methods
@@ -531,7 +531,7 @@ This repository serves as a personal laboratory.
 
 ### Concurrency Patterns
 
-#### - [ ] Producer-Consumer Pattern
+#### 1. Producer-Consumer Pattern
 
 - [ ] **Purpose**: Coordinate production and consumption of data
 - [ ] **Use Cases**: Task queues, data pipelines
