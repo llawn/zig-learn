@@ -20,24 +20,20 @@ Static arrays have their size determined at compile time:
 
 ```zig title="Static Array Examples"
 const array = [5]i32{ 1, 2, 3, 4, 5 };  // 5 integers
-const slice = array[1..3];               // Slice of elements 1-2  
+const slice = array[1..3];               // Slice of elements 1-2
 const repeated = [_]u8{0} ** 10;          // 10 zero bytes
-const matrix = [3][3]f32{                // 3x3 float matrix
-    .{ 1, 0, 0 },
-    .{ 0, 1, 0 }, 
-    .{ 0, 0, 1 },
-};
 ```
 
 **Characteristics:**
 
 - Size known at compile time
-- Stack allocation  
+- Stack allocation
 - No runtime overhead
 - Bounds checking in safe modes
 
 !!! info "Memory Layout"
-    Static arrays are stored contiguously in memory with no indirection, making them cache-friendly and efficient.
+
+  Static arrays are stored contiguously in memory with no indirection, making them cache-friendly and efficient.
 
 ### Dynamic Arrays (ArrayList)
 
@@ -58,13 +54,14 @@ const length = list.items.len;                  // Current size
 
 **Characteristics:**
 
-- Runtime resizing  
+- Runtime resizing
 - Heap allocation
 - Amortized $O(1)$ append
 - Memory management required
 
 !!! warning "Memory Management"
-    Always call `deinit()` to prevent memory leaks. Use `defer` to ensure cleanup.
+
+  Always call `deinit()` to prevent memory leaks. Use `defer` to ensure cleanup.
 
 ### Multi-dimensional Arrays
 
@@ -72,19 +69,19 @@ Arrays of arrays for matrix and tensor operations:
 
 ```zig
 const matrix = [2][3]u8{
-    .{ 1, 2, 3 },
-    .{ 4, 5, 6 },
+  .{ 1, 2, 3 },
+  .{ 4, 5, 6 },
 };
 
 const tensor3 = [2][2][3]u8{
-    .{
-        .{ 255, 0, 0 },
-        .{ 0, 255, 0 },
-    },
-    .{
-        .{ 0, 0, 255 },
-        .{ 255, 255, 0 },
-    },
+  .{
+    .{ 255, 0, 0 },
+    .{ 0, 255, 0 },
+  },
+  .{
+    .{ 0, 0, 255 },
+    .{ 255, 255, 0 },
+  },
 };
 ```
 
@@ -93,37 +90,35 @@ const tensor3 = [2][2][3]u8{
 Fixed-size circular buffer for efficient FIFO operations:
 
 ```zig title="Ring Buffer Implementation"
-pub fn CircularBuffer(comptime T: type, comptime capacity: usize) type {
-    return struct {
-        const Self = @This();
-        
-        data: [capacity]T = undefined,  // Storage
-        head: usize = 0,               // Read position
-        tail: usize = 0,               // Write position  
-        count: usize = 0,              // Current elements
+pub fn CircularBuffer(comptime T: type, comptime size: usize) type {
+  return struct {
+    data: [size]T = undefined,     // Storage
+    head: usize = 0,               // Read position
+    tail: usize = 0,               // Write position
+    count: usize = 0,              // Current elements
 
-        pub fn push(self: *Self, item: T) !void {
-            if (self.count >= capacity) return error.Overflow;
-            
-            self.data[self.tail] = item;     // Write at tail
-            self.tail = (self.tail + 1) % capacity;  // Wrap around
-            self.count += 1;                 // Track count
-        }
+    const Self = @This();
 
-        pub fn pop(self: *Self) ?T {
-            if (self.count == 0) return null;
-            
-            const item = self.data[self.head];    // Read from head
-            self.head = (self.head + 1) % capacity;   // Wrap around
-            self.count -= 1;                 // Update count
-            return item;
-        }
-    };
+    // Write at tail
+    pub fn append(self: *Self, item: T) !void {
+      ...
+    }
+
+    // Read at head
+    pub fn pop(self: *Self) ?T {
+      if (self.count == 0) return null;
+
+      const item = self.data[self.head];    // Read from head
+      self.head = (self.head + 1) % capacity;   // Wrap around
+      self.count -= 1;                 // Update count
+      return item;
+    }
+  };
 }
 ```
 
 !!! tip "Use Cases"
-    Perfect for audio buffers, network packets, and producer-consumer patterns.
+Perfect for audio buffers, network packets, and producer-consumer patterns.
 
 ### Sparse Arrays
 
@@ -153,59 +148,59 @@ try sparse.put(99999, 777);
 
 !!! example "Traversal"
 
-    ```zig title="Iterating Over Arrays"
-    // Simple iteration
-    for (array) |item| {
-        std.debug.print("Item: {}\n", .{item});
-    }
+```zig title="Iterating Over Arrays"
+// Simple iteration
+for (array) |item| {
+  std.debug.print("Item: {}\n", .{item});
+}
 
-    // With index
-    for (array, 0..) |item, index| {
-        std.debug.print("[{}] = {}\n", .{ index, item });
-    }
+  // With index
+  for (array, 0..) |item, index| {
+    std.debug.print("[{}] = {}\n", .{ index, item });
+  }
 
-    // Mutable iteration
-    for (array) |*item| {
-        item.* *= 2;  // Double each element
-    }
-    ```
+  // Mutable iteration
+  for (array) |*item| {
+    item.* *= 2;  // Double each element
+  }
+```
 
 !!! example "Search"
 
-    ```zig title="Finding Elements"
-    const target = 42;
-    var found_index: ?usize = null;
+```zig title="Finding Elements"
+const target = 42;
+var found_index: ?usize = null;
 
-    // Linear search
-    for (array, 0..) |item, index| {
-        if (item == target) {
-            found_index = index;
-            break;
-        }
-    }
+// Linear search
+for (array, 0..) |item, index| {
+  if (item == target) {
+    found_index = index;
+    break;
+  }
+}
 
-    // Using std.mem.indexOf
-    if (std.mem.indexOfScalar(u32, &array, target)) |idx| {
-        std.debug.print("Found at index {}\n", .{idx});
-    }
-    ```
+  // Using std.mem.indexOf
+  if (std.mem.indexOfScalar(u32, &array, target)) |idx| {
+    std.debug.print("Found at index {}\n", .{idx});
+  }
+```
 
 !!! example "Modification"
 
-    ```zig title="Array Operations"
-    // Direct assignment (bounds checked in safe mode)
-    array[0] = 100;
+```zig title="Array Operations"
+// Direct assignment (bounds checked in safe mode)
+array[0] = 100;
 
-    // Slice modification
-    const slice = array[1..4];
-    for (slice, 0..) |*item, i| {
-        item.* = @intCast(i * 10);  // Safe cast
-    }
+// Slice modification
+const slice = array[1..4];
+for (slice, 0..) |*item, i| {
+  item.* = @intCast(i * 10);  // Safe cast
+}
 
-    // Copy between arrays
-    var dest: [array.len]u32 = undefined;
-    @memcpy(&dest, &array);  // Built-in memory copy
-    ```
+// Copy between arrays
+var dest: [array.len]u32 = undefined;
+@memcpy(&dest, &array);  // Built-in memory copy
+```
 
 ## Best Practices
 
