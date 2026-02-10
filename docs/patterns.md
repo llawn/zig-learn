@@ -441,128 +441,676 @@
     };
     ```
 
-### Behavioral Patterns
-
-Behavioral patterns are concerned with algorithms and the assignment of responsibilities between objects.
+=== "🎭 Behavioral Patterns"
+    
+    !!! tip "Object Interaction & Communication"
+        Behavioral patterns are concerned with algorithms and the assignment of responsibilities between objects.
 
 #### Strategy Pattern
 
-Defines a family of algorithms, encapsulates each one, and makes them interchangeable.
-
-**Use Cases:**
-
-- Sorting algorithms
-- Compression methods
-- Payment processing
+!!! card "🎯 Strategy"
+    
+    Defines a family of algorithms, encapsulates each one, and makes them interchangeable.
+    
+    **Use Cases:**
+    
+    - Sorting algorithms
+    - Compression methods
+    - Payment processing
+    
+    **Comptime Strategy Selection:**
+    
+    ```zig title "Sorting Strategy Pattern"
+    const SortStrategy = enum {
+        bubble,
+        quick,
+        merge,
+        heap,
+    };
+    
+    fn Sort(comptime T: type, comptime strategy: SortStrategy) type {
+        return struct {
+            const Self = @This();
+            
+            data: []T,
+            
+            pub fn sort(self: Self) void {
+                switch (strategy) {
+                    .bubble => self.bubbleSort(),
+                    .quick => self.quickSort(0, self.data.len - 1),
+                    .merge => self.mergeSort(0, self.data.len - 1),
+                    .heap => self.heapSort(),
+                }
+            }
+            
+            fn bubbleSort(self: Self) void {
+                for (0..self.data.len) |i| {
+                    for (0..self.data.len - i - 1) |j| {
+                        if (self.data[j] > self.data[j + 1]) {
+                            std.mem.swap(T, &self.data[j], &self.data[j + 1]);
+                        }
+                    }
+                }
+            }
+            
+            fn quickSort(self: Self, left: usize, right: usize) void {
+                // Implementation...
+            }
+        };
+    }
+    
+    // Usage
+    const numbers = [_]u32{ 5, 2, 8, 1, 9 };
+    var sorter = Sort(u32, .quick){ .data = &numbers };
+    sorter.sort();
+    ```
 
 #### Observer Pattern
 
-Defines a one-to-many dependency between objects so that when one object changes state, all its dependents are notified and updated automatically.
-
-**Use Cases:**
-
-- Event systems
-- UI updates
-- Model-View-Controller
+!!! card "👁️ Observer"
+    
+    Defines a one-to-many dependency between objects so that when one object changes state, all its dependents are notified and updated automatically.
+    
+    **Use Cases:**
+    
+    - Event systems
+    - UI updates
+    - Model-View-Controller
+    
+    **Type-Safe Implementation:**
+    
+    ```zig title="Event System Observer"
+    const Event = union(enum) {
+        data_updated: struct { id: u32, new_value: i32 },
+        user_login: struct { username: []const u8, timestamp: i64 },
+        error_occurred: struct { error_code: u16, message: []const u8 },
+    };
+    
+    const Observer = struct {
+        const Callback = *const fn (observer: *anyopaque, event: Event) void;
+        
+        ptr: *anyopaque,
+        callback: Callback,
+        
+        pub fn notify(self: Observer, event: Event) void {
+            self.callback(self.ptr, event);
+        }
+    };
+    
+    const Subject = struct {
+        const Self = @This();
+        
+        observers: std.ArrayList(Observer),
+        
+        pub fn attach(self: *Self, observer: Observer) !void {
+            try self.observers.append(observer);
+        }
+        
+        pub fn detach(self: *Self, observer: Observer) void {
+            for (self.observers.items, 0..) |obs, i| {
+                if (obs.ptr == observer.ptr) {
+                    _ = self.observers.orderedRemove(i);
+                    break;
+                }
+            }
+        }
+        
+        pub fn notify(self: Self, event: Event) void {
+            for (self.observers.items) |observer| {
+                observer.notify(event);
+            }
+        }
+    };
+    ```
 
 #### Command Pattern
 
-Encapsulates a request as an object, thereby letting you parameterize clients with different requests, queue or log requests, and support undoable operations.
-
-**Use Cases:**
-
-- Undo/redo systems
-- Macro recording
-- Transaction management
+!!! card "📝 Command"
+    
+    Encapsulates a request as an object, thereby letting you parameterize clients with different requests, queue or log requests, and support undoable operations.
+    
+    **Use Cases:**
+    
+    - Undo/redo systems
+    - Macro recording
+    - Transaction management
+    
+    **Undo/Redo Implementation:**
+    
+    ```zig title="Text Editor Command Pattern"
+    const Command = struct {
+        const Self = @This();
+        const VTable = struct {
+            executeFn: *const fn (*anyopaque) anyerror!void,
+            undoFn: *const fn (*anyopaque) anyerror!void,
+        };
+        
+        ptr: *anyopaque,
+        vtable: *const VTable,
+        
+        pub fn execute(self: Self) !void {
+            return self.vtable.executeFn(self.ptr);
+        }
+        
+        pub fn undo(self: Self) !void {
+            return self.vtable.undoFn(self.ptr);
+        }
+    };
+    
+    const InsertTextCommand = struct {
+        editor: *TextEditor,
+        position: usize,
+        text: []const u8,
+        
+        fn execute(self: *@This()) !void {
+            try self.editor.insert(self.position, self.text);
+        }
+        
+        fn undo(self: *@This()) !void {
+            self.editor.delete(self.position, self.text.len);
+        }
+    };
+    
+    const CommandHistory = struct {
+        undo_stack: std.ArrayList(Command),
+        redo_stack: std.ArrayList(Command),
+        
+        pub fn execute(self: *@This(), command: Command) !void {
+            try command.execute();
+            try self.undo_stack.append(command);
+            self.redo_stack.clearAndFree();
+        }
+        
+        pub fn undo(self: *@This()) !void {
+            if (self.undo_stack.pop()) |command| {
+                try command.undo();
+                try self.redo_stack.append(command);
+            }
+        }
+    };
+    ```
 
 #### State Pattern
 
-Allows an object to alter its behavior when its internal state changes.
-
-**Use Cases:**
-
-- Game characters
-- Protocol implementations
-- Workflow systems
+!!! card "🔄 State"
+    
+    Allows an object to alter its behavior when its internal state changes.
+    
+    **Use Cases:**
+    
+    - Game characters
+    - Protocol implementations
+    - Workflow systems
+    
+    **Game State Machine:**
+    
+    ```zig title="Game Character State Pattern"
+    const CharacterState = enum {
+        idle,
+        walking,
+        running,
+        jumping,
+        attacking,
+    };
+    
+    const Character = struct {
+        const Self = @This();
+        
+        state: CharacterState = .idle,
+        position: [2]f32 = .{ 0, 0 },
+        velocity: [2]f32 = .{ 0, 0 },
+        
+        pub fn update(self: *Self, dt: f32) void {
+            switch (self.state) {
+                .idle => self.updateIdle(dt),
+                .walking => self.updateWalking(dt),
+                .running => self.updateRunning(dt),
+                .jumping => self.updateJumping(dt),
+                .attacking => self.updateAttacking(dt),
+            }
+        }
+        
+        pub fn handleInput(self: *Self, input: Input) void {
+            switch (self.state) {
+                .idle => self.handleIdleInput(input),
+                .walking => self.handleWalkingInput(input),
+                .running => self.handleRunningInput(input),
+                .jumping => self.handleJumpingInput(input),
+                .attacking => self.handleAttackingInput(input),
+            }
+        }
+        
+        fn updateIdle(self: *Self, dt: f32) void {
+            // Apply friction
+            self.velocity[0] *= 0.9;
+            self.velocity[1] *= 0.9;
+            
+            // Transition to walking if moving
+            if (@fabs(self.velocity[0]) > 0.1 or @fabs(self.velocity[1]) > 0.1) {
+                self.state = .walking;
+            }
+        }
+    };
+    ```
 
 #### Iterator Pattern
 
-Provides a way to access the elements of an aggregate object sequentially without exposing its underlying representation.
+!!! card "🔍 Iterator"
+    
+    Provides a way to access the elements of an aggregate object sequentially without exposing its underlying representation.
+    
+    **Use Cases:**
+    
+    - Collection traversal
+    - Database cursors
+    - Stream processing
+    
+    **Generic Iterator:**
+    
+    ```zig title="Generic Iterator Pattern"
+    fn Iterator(comptime T: type) type {
+        return struct {
+            const Self = @This();
+            const VTable = struct {
+                nextFn: *const fn (*anyopaque) ?T,
+                resetFn: *const fn (*anyopaque) void,
+            };
+            
+            ptr: *anyopaque,
+            vtable: *const VTable,
+            
+            pub fn next(self: *Self) ?T {
+                return self.vtable.nextFn(self.ptr);
+            }
+            
+            pub fn reset(self: *Self) void {
+                self.vtable.resetFn(self.ptr);
+            }
+        };
+    }
+    
+    const ArrayIterator = struct {
+        array: []const u32,
+        index: usize = 0,
+        
+        fn next(self: *@This()) ?u32 {
+            if (self.index >= self.array.len) return null;
+            defer self.index += 1;
+            return self.array[self.index];
+        }
+        
+        fn reset(self: *@This()) void {
+            self.index = 0;
+        }
+    };
+    
+    // Usage with any collection type
+    fn createArrayIterator(array: []const u32) Iterator(u32) {
+        const iter = try allocator.create(ArrayIterator);
+        iter.* = .{ .array = array };
+        
+        const vtable = comptime VTable{
+            .nextFn = (struct {
+                fn fnImpl(ptr: *anyopaque) ?u32 {
+                    return @as(*ArrayIterator, @ptrCast(ptr)).next();
+                }
+            }).fnImpl,
+            .resetFn = (struct {
+                fn fnImpl(ptr: *anyopaque) void {
+                    @as(*ArrayIterator, @ptrCast(ptr)).reset();
+                }
+            }).fnImpl,
+        };
+        
+        return .{ .ptr = iter, .vtable = &vtable };
+    }
+    ```
 
-**Use Cases:**
-
-- Collection traversal
-- Database cursors
-- Stream processing
-
-### Concurrency Patterns
-
-Concurrency patterns deal with multi-threaded programming and synchronization.
+=== "🔀 Concurrency Patterns"
+    
+    !!! tip "Multi-threaded Programming"
+        Concurrency patterns deal with multi-threaded programming and synchronization.
 
 #### Producer-Consumer Pattern
 
-Coordinates production and consumption of data using queues.
-
-**Use Cases:**
-
-- Task queues
-- Data pipelines
-- Message processing
+!!! card "📤 Producer-Consumer"
+    
+    Coordinates production and consumption of data using queues.
+    
+    **Use Cases:**
+    
+    - Task queues
+    - Data pipelines
+    - Message processing
+    
+    **Thread-Safe Implementation:**
+    
+    ```zig title="Producer-Consumer with Channels"
+    const Channel = struct {
+        const Self = @This();
+        
+        buffer: std.ArrayList(T),
+        mutex: std.Thread.Mutex,
+        condition: std.Thread.Condition,
+        closed: bool = false,
+        
+        pub fn send(self: *Self, item: T) !void {
+            self.mutex.lock();
+            defer self.mutex.unlock();
+            
+            while (self.buffer.items.len >= capacity and !self.closed) {
+                self.condition.wait(&self.mutex);
+            }
+            
+            if (self.closed) return error.ChannelClosed;
+            
+            try self.buffer.append(item);
+            self.condition.signal();
+        }
+        
+        pub fn receive(self: *Self) ?T {
+            self.mutex.lock();
+            defer self.mutex.unlock();
+            
+            while (self.buffer.items.len == 0 and !self.closed) {
+                self.condition.wait(&self.mutex);
+            }
+            
+            if (self.buffer.items.len == 0) return null;
+            
+            const item = self.buffer.orderedRemove(0);
+            self.condition.signal();
+            return item;
+        }
+    };
+    ```
 
 #### Thread Pool Pattern
 
-Reuses threads for executing tasks to improve performance.
-
-**Use Cases:**
-
-- Web servers
-- Parallel processing
-- Background jobs
+!!! card "🏊 Thread Pool"
+    
+    Reuses threads for executing tasks to improve performance.
+    
+    **Use Cases:**
+    
+    - Web servers
+    - Parallel processing
+    - Background jobs
+    
+    **Efficient Thread Pool:**
+    
+    ```zig title="Work-Stealing Thread Pool"
+    const ThreadPool = struct {
+        const Self = @This();
+        const Task = struct {
+            fn_ptr: *const fn (*anyopaque) void,
+            context: *anyopaque,
+        };
+        
+        workers: []Worker,
+        work_queue: std.atomic.Queue(Task),
+        shutdown: std.atomic.Value(bool) = std.atomic.Value(bool).init(false),
+        
+        const Worker = struct {
+            thread: std.Thread,
+            pool: *ThreadPool,
+            
+            fn run(worker: *Worker) void {
+                while (!worker.pool.shutdown.load(.Acquire)) {
+                    if (worker.pool.work_queue.pop()) |task| {
+                        task.fn_ptr(task.context);
+                    } else {
+                        std.time.sleep(1_000_000); // 1ms
+                    }
+                }
+            }
+        };
+        
+        pub fn submit(self: *Self, task: Task) !void {
+            try self.work_queue.push(task);
+        }
+    };
+    ```
 
 #### Future/Promise Pattern
 
-Handles asynchronous operations and their results.
-
-**Use Cases:**
-
-- Network requests
-- Computations
-- I/O operations
+!!! card "🔮 Future/Promise"
+    
+    Handles asynchronous operations and their results.
+    
+    **Use Cases:**
+    
+    - Network requests
+    - Computations
+    - I/O operations
+    
+    **Async Implementation:**
+    
+    ```zig title="Future/Promise Pattern"
+    const Future = struct {
+        const Self = @This();
+        const State = union(enum) {
+            pending,
+            completed: T,
+            failed: anyerror,
+        };
+        
+        state: State = .pending,
+        mutex: std.Thread.Mutex,
+        condition: std.Thread.Condition,
+        
+        pub fn wait(self: *Self) !T {
+            self.mutex.lock();
+            defer self.mutex.unlock();
+            
+            while (self.state == .pending) {
+                self.condition.wait(&self.mutex);
+            }
+            
+            return switch (self.state) {
+                .completed => |value| value,
+                .failed => |err| err,
+                .pending => unreachable,
+            };
+        }
+        
+        pub fn isReady(self: *Self) bool {
+            self.mutex.lock();
+            defer self.mutex.unlock();
+            return self.state != .pending;
+        }
+    };
+    
+    const Promise = struct {
+        future: *Future,
+        
+        pub fn complete(self: Promise, value: T) void {
+            self.future.mutex.lock();
+            defer self.future.mutex.unlock();
+            
+            self.future.state = .{ .completed = value };
+            self.future.condition.broadcast();
+        }
+        
+        pub fn fail(self: Promise, err: anyerror) void {
+            self.future.mutex.lock();
+            defer self.future.mutex.unlock();
+            
+            self.future.state = .{ .failed = err };
+            self.future.condition.broadcast();
+        }
+    };
+    ```
 
 ## Zig-Specific Implementation Considerations
 
+!!! info "Leveraging Zig Features"
+
 ### Memory Management
 
-- **Explicit allocation** - Use allocators for pattern instances
-- **Resource cleanup** - Implement proper deinit methods
-- **Stack vs heap** - Choose appropriate storage
+!!! tip "Explicit Allocation"
+    
+    - **Explicit allocation** - Use allocators for pattern instances
+    - **Resource cleanup** - Implement proper deinit methods
+    - **Stack vs heap** - Choose appropriate storage
+    
+    ```zig
+    const Pattern = struct {
+        allocator: std.mem.Allocator,
+        
+        pub fn init(allocator: std.mem.Allocator) Self {
+            return Self{ .allocator = allocator };
+        }
+        
+        pub fn deinit(self: *Self) void {
+            // Clean up allocated resources
+        }
+    };
+    ```
 
 ### Type System
 
-- **Comptime generics** - Use comptime for type parameters
-- **Tagged unions** - Implement state machines efficiently
-- **Interfaces** - Use struct with function pointers
+!!! tip "Type Safety & Generics"
+    
+    - **Comptime generics** - Use comptime for type parameters
+    - **Tagged unions** - Implement state machines efficiently
+    - **Interfaces** - Use struct with function pointers
+    
+    ```zig
+    // Comptime polymorphism
+    fn Factory(comptime ProductType: type) type {
+        return struct {
+            pub fn create(config: Config) !ProductType {
+                // Type-safe creation
+            }
+        };
+    }
+    
+    // Tagged union for state
+    const State = union(enum) {
+        idle,
+        running: struct { speed: f32 },
+        error: struct { code: u32 },
+    };
+    ```
 
 ### Error Handling
 
-- **Error unions** - Proper error propagation
-- **Try/catch** - Handle errors appropriately
-- **Optional types** - Handle nullable values safely
+!!! tip "Robust Error Management"
+    
+    - **Error unions** - Proper error propagation
+    - **Try/catch** - Handle errors appropriately
+    - **Optional types** - Handle nullable values safely
+    
+    ```zig
+    pub fn execute(self: Self) !Result {
+        const result = self.prepare() catch |err| {
+            self.logError(err);
+            return err;
+        };
+        
+        return self.process(result) orelse error.NoData;
+    }
+    ```
 
 ### Performance
 
-- **Zero-cost abstractions** - Avoid runtime overhead
-- **Inlining** - Use inline for small functions
-- **Compile-time optimization** - Leverage comptime features
+!!! tip "Zero-Cost Abstractions"
+    
+    - **Zero-cost abstractions** - Avoid runtime overhead
+    - **Inlining** - Use inline for small functions
+    - **Compile-time optimization** - Leverage comptime features
+    
+    ```zig
+    // Compile-time strategy selection
+    fn Algorithm(comptime strategy: Strategy) type {
+        return struct {
+            pub fn execute(self: Self, data: []T) void {
+                if (comptime strategy == .optimized) {
+                    // Optimized path
+                } else {
+                    // General path
+                }
+            }
+        };
+    }
+    ```
 
-## Resources
+## Pattern Selection Guide
 
-### Books
+!!! chart "Decision Tree"
 
-- "Design Patterns: Elements of Reusable Object-Oriented Software" - GoF
-- "Patterns of Enterprise Application Architecture" - Martin Fowler
+    ```mermaid
+    flowchart TD
+        A[What's your problem?] --> B{Object Creation?}
+        B -->|Yes| C[Creational Patterns]
+        B -->|No| D{Structure Issues?}
+        D -->|Yes| E[Structural Patterns]
+        D -->|No| F[Behavioral Patterns]
+        
+        C --> G[Singleton/Factory/Builder]
+        E --> H[Adapter/Decorator/Proxy]
+        F --> I[Strategy/Observer/Command]
+    ```
 
-### Online Resources
+## Resources & Further Learning
 
-- [Zig Design Patterns](https://github.com/ziglang/zig/wiki/Design-Patterns)
-- [Refactoring.guru](https://refactoring.guru/design-patterns)
+!!! grid "2"
+
+    !!! card "📚 Essential Reading"
+        
+        ### Books
+        
+        - "Design Patterns: Elements of Reusable Object-Oriented Software" - GoF
+        - "Patterns of Enterprise Application Architecture" - Martin Fowler
+        - "Clean Architecture" - Robert C. Martin
+        - "Domain-Driven Design" - Eric Evans
+
+    !!! card "🌐 Online Resources"
+        
+        ### Websites & Communities
+        
+        - [Zig Design Patterns](https://github.com/ziglang/zig/wiki/Design-Patterns)
+        - [Refactoring.guru](https://refactoring.guru/design-patterns)
+        - [Zig Discourse](https://discourse.ziglang.org/)
+        - [Zig GitHub](https://github.com/ziglang/zig/issues)
+
+!!! example "Pattern Implementation Template"
+
+    ```zig title="Standard Pattern Template"
+    const PatternName = struct {
+        const Self = @This();
+        
+        // Configuration
+        config: Config,
+        allocator: std.mem.Allocator,
+        
+        // State
+        state: State,
+        
+        pub fn init(config: Config, allocator: std.mem.Allocator) !Self {
+            return Self{
+                .config = config,
+                .allocator = allocator,
+                .state = try State.init(config),
+            };
+        }
+        
+        pub fn deinit(self: *Self) void {
+            self.state.deinit();
+        }
+        
+        // Core pattern operations
+        pub fn execute(self: *Self) !Result {
+            // Implementation
+        }
+    };
+    ```
+
+!!! question "Pattern Help?"
+    
+    Need help implementing a specific pattern in Zig?
+    
+    - Check the [examples in this repository](https://github.com/llawn/zig-learn)
+    - Ask questions on [Zig Discord](https://discord.gg/ziglang)
+    - Review [standard library implementations](https://github.com/ziglang/zig/tree/master/lib)
