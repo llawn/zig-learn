@@ -1,121 +1,445 @@
 # Design Patterns
 
-Design patterns are reusable solutions to commonly occurring problems in software design. This section explores the implementation of various design patterns in Zig.
+!!! abstract "Software Architecture Patterns in Zig"
+    Design patterns are reusable solutions to commonly occurring problems in software design. This section explores the implementation of various design patterns in Zig, leveraging its unique features for optimal solutions.
 
-## Overview
+## Pattern Overview
 
-Design patterns provide tested, proven development paradigms that can speed up the development process. They represent best practices and can be adapted to fit specific needs.
+!!! info "Why Design Patterns Matter"
+    
+    Design patterns provide tested, proven development paradigms that can speed up the development process. They represent best practices and can be adapted to fit specific needs.
+    
+    !!! example "Benefits in Zig"
+        - **Memory Safety** - Patterns respect Zig's ownership model
+        - **Performance** - Zero-cost abstractions maintain efficiency
+        - **Expressiveness** - Comptime features enable elegant implementations
 
-## Pattern Categories
+!!! chart "Pattern Selection Guide"
 
-### Creational Patterns
+    ```mermaid
+    flowchart TD
+        A[Problem Type] --> B{Need to Create?}
+        B -->|Yes| C{Need Flexibility?}
+        B -->|No| D{Need Structure?}
+        
+        C -->|Simple| E[Factory Method]
+        C -->|Complex| F[Abstract Factory]
+        C -->|Step-by-step| G[Builder]
+        C -->|Single Instance| H[Singleton]
+        
+        D -->|Yes| I{Need Composition?}
+        D -->|No| J{Need Behavior?}
+        
+        I -->|Tree| K[Composite]
+        I -->|Interface Change| L[Adapter]
+        I -->|Add Features| M[Decorator]
+        I -->|Control Access| N[Proxy]
+        
+        J -->|Algorithm Swap| O[Strategy]
+        J -->|Event System| P[Observer]
+        J -->|Undo/Redo| Q[Command]
+        J -->|State Changes| R[State]
+    ```
 
-Creational patterns provide various object creation mechanisms, which increase flexibility and reuse of existing code.
+=== "🏗️ Creational Patterns"
+    
+    !!! tip "Object Creation Mechanisms"
+        Creational patterns provide various object creation mechanisms, which increase flexibility and reuse of existing code.
 
 #### Singleton Pattern
 
-Ensures a class has only one instance and provides a global point of access to it.
+!!! card "🔄 Singleton"
+    
+    Ensures a class has only one instance and provides a global point of access to it.
+    
+    **Use Cases:**
+    
+    - Configuration managers
+    - Connection pools
+    - Logging systems
+    
+    **Zig Implementation:**
+    
+    ```zig title="Thread-Safe Singleton"
+    pub fn Singleton(comptime T: type) type {
+        return struct {
+            const Self = @This();
+            
+            var instance: ?T = null;
+            var mutex = std.Thread.Mutex{};
+            var initialized = false;
 
-**Use Cases:**
-
-- Configuration managers
-- Connection pools
-- Logging systems
-
-**Zig Implementation:**
-
-```zig
-pub fn Singleton(comptime T: type) type {
-    return struct {
-        const Self = @This();
-
-        var instance: ?T = null;
-        var initialized = false;
-
-        pub fn getInstance() *T {
-            if (!initialized) {
-                instance = T{};
-                initialized = true;
+            pub fn getInstance() *T {
+                mutex.lock();
+                defer mutex.unlock();
+                
+                if (!initialized) {
+                    instance = T{};
+                    initialized = true;
+                }
+                return &instance.?;
             }
-            return &instance.?;
-        }
-    };
-}
-```
+            
+            pub fn reset() void {
+                mutex.lock();
+                defer mutex.unlock();
+                
+                instance = null;
+                initialized = false;
+            }
+        };
+    }
+    ```
+    
+    **Memory Safety Note:** Zig's compile-time guarantees ensure the singleton is properly initialized before use.
 
 #### Factory Method Pattern
 
-Defines an interface for creating an object but lets subclasses decide which class to instantiate.
-
-**Use Cases:**
-
-- Plugin systems
-- Configurable object creation
-- Framework extensibility
+!!! card "🏭 Factory Method"
+    
+    Defines an interface for creating an object but lets subclasses decide which class to instantiate.
+    
+    **Use Cases:**
+    
+    - Plugin systems
+    - Configurable object creation
+    - Framework extensibility
+    
+    **Zig Implementation:**
+    
+    ```zig title="Generic Factory Method"
+    const Product = union(enum) {
+        widget: Widget,
+        gadget: Gadget,
+        doohickey: Doohickey,
+    };
+    
+    const Factory = struct {
+        fn createProduct(product_type: ProductType) !Product {
+            return switch (product_type) {
+                .widget => Product{ .widget = try Widget.init() },
+                .gadget => Product{ .gadget = try Gadget.init() },
+                .doohickey => Product{ .doohickey = try Doohickey.init() },
+            };
+        }
+    };
+    ```
 
 #### Builder Pattern
 
-Separates the construction of a complex object from its representation.
-
-**Use Cases:**
-
-- Configuration objects
-- SQL query builders
-- Complex object construction
+!!! card "🔧 Builder Pattern"
+    
+    Separates the construction of a complex object from its representation.
+    
+    **Use Cases:**
+    
+    - Configuration objects
+    - SQL query builders
+    - Complex object construction
+    
+    **Fluent Interface:**
+    
+    ```zig title="SQL Query Builder"
+    const QueryBuilder = struct {
+        select_fields: []const []const u8 = &[_][]const u8{},
+        from_table: ?[]const u8 = null,
+        where_clauses: []const []const u8 = &[_][]const u8{},
+        limit_count: ?usize = null,
+        
+        pub fn select(self: *QueryBuilder, fields: []const []const u8) *QueryBuilder {
+            self.select_fields = fields;
+            return self;
+        }
+        
+        pub fn from(self: *QueryBuilder, table: []const u8) *QueryBuilder {
+            self.from_table = table;
+            return self;
+        }
+        
+        pub fn where(self: *QueryBuilder, clause: []const u8) *QueryBuilder {
+            self.where_clauses = self.where_clauses ++ [_][]const u8{clause};
+            return self;
+        }
+        
+        pub fn build(self: QueryBuilder) []const u8 {
+            // Generate SQL string
+        }
+    };
+    
+    // Usage
+    const query = QueryBuilder{}
+        .select(&[_][]const u8{"name", "email"})
+        .from("users")
+        .where("age > 18")
+        .where("status = 'active'")
+        .build();
+    ```
 
 #### Abstract Factory Pattern
 
-Provides an interface for creating families of related objects without specifying their concrete classes.
+!!! card "🏛️ Abstract Factory"
+    
+    Provides an interface for creating families of related objects without specifying their concrete classes.
+    
+    **Use Cases:**
+    
+    - UI toolkits
+    - Database connectors
+    - Platform-specific implementations
+    
+    **Type-Safe Implementation:**
+    
+    ```zig title="UI Component Factory"
+    const UIFactory = struct {
+        const ComponentType = enum {
+            button,
+            label,
+            textbox,
+        };
+        
+        fn createButton(self: UIFactory, text: []const u8) Button {
+            return Button.init(text, self.style);
+        }
+        
+        fn createLabel(self: UIFactory, text: []const u8) Label {
+            return Label.init(text, self.style);
+        }
+    };
+    
+    const DarkUIFactory = UIFactory{
+        .style = .dark,
+    };
+    
+    const LightUIFactory = UIFactory{
+        .style = .light,
+    };
+    ```
 
-**Use Cases:**
-
-- UI toolkits
-- Database connectors
-- Platform-specific implementations
-
-### Structural Patterns
-
-Structural patterns explain how to assemble objects and classes into larger structures while keeping these structures flexible and efficient.
+=== "🏢 Structural Patterns"
+    
+    !!! tip "Object Composition & Assembly"
+        Structural patterns explain how to assemble objects and classes into larger structures while keeping these structures flexible and efficient.
 
 #### Adapter Pattern
 
-Allows the interface of an existing class to be used as another interface.
-
-**Use Cases:**
-
-- Legacy code integration
-- Format conversion
-- Interface compatibility
+!!! card "🔌 Adapter"
+    
+    Allows the interface of an existing class to be used as another interface.
+    
+    **Use Cases:**
+    
+    - Legacy code integration
+    - Format conversion
+    - Interface compatibility
+    
+    **Implementation:**
+    
+    ```zig title="File System Adapter"
+    const LegacyFileSystem = struct {
+        fn readFile(path: []const u8) ![]u8 { /* Legacy implementation */ }
+        fn writeFile(path: []const u8, data: []const u8) !void { /* Legacy implementation */ }
+    };
+    
+    const ModernFileSystem = struct {
+        const Self = @This();
+        
+        legacy: LegacyFileSystem,
+        
+        pub fn read(path: []const u8) ![]u8 {
+            // Adapts modern interface to legacy implementation
+            return self.legacy.readFile(path);
+        }
+        
+        pub fn write(path: []const u8, contents: []const u8) !void {
+            // Adapts modern interface to legacy implementation
+            return self.legacy.writeFile(path, contents);
+        }
+    };
+    ```
 
 #### Decorator Pattern
 
-Allows behavior to be added to an individual object, either statically or dynamically, without affecting the behavior of other objects from the same class.
-
-**Use Cases:**
-
-- UI components
-- Stream processing
-- Feature toggling
+!!! card "🎨 Decorator"
+    
+    Allows behavior to be added to an individual object, either statically or dynamically, without affecting the behavior of other objects from the same class.
+    
+    **Use Cases:**
+    
+    - UI components
+    - Stream processing
+    - Feature toggling
+    
+    **Stream Processing Example:**
+    
+    ```zig title="Data Stream Decorators"
+    const Stream = struct {
+        const Self = @This();
+        const VTable = struct {
+            readFn: *const fn (*Self, []u8) ?usize,
+            writeFn: *const fn (*Self, []const u8) !usize,
+        };
+        
+        ptr: *anyopaque,
+        vtable: *const VTable,
+        
+        pub fn read(self: Self, buffer: []u8) ?usize {
+            return self.vtable.readFn(self.ptr, buffer);
+        }
+        
+        pub fn write(self: Self, data: []const u8) !usize {
+            return self.vtable.writeFn(self.ptr, data);
+        }
+    };
+    
+    // Compression decorator
+    const CompressedStream = struct {
+        base: Stream,
+        
+        pub fn write(self: @This(), data: []const u8) !usize {
+            const compressed = try compress(data);
+            return self.base.write(compressed);
+        }
+    };
+    
+    // Encryption decorator  
+    const EncryptedStream = struct {
+        base: Stream,
+        key: []const u8,
+        
+        pub fn write(self: @This(), data: []const u8) !usize {
+            const encrypted = try encrypt(data, self.key);
+            return self.base.write(encrypted);
+        }
+    };
+    
+    // Chaining decorators
+    var file_stream = FileStream.init("data.bin");
+    var compressed = CompressedStream{ .base = file_stream };
+    var secure = EncryptedStream{ 
+        .base = compressed.stream(), 
+        .key = "secret123" 
+    };
+    ```
 
 #### Proxy Pattern
 
-Provides a surrogate or placeholder for another object to control access to it.
-
-**Use Cases:**
-
-- Lazy loading
-- Access control
-- Caching mechanisms
+!!! card "🛡️ Proxy"
+    
+    Provides a surrogate or placeholder for another object to control access to it.
+    
+    **Use Cases:**
+    
+    - Lazy loading
+    - Access control
+    - Caching mechanisms
+    
+    **Caching Proxy Example:**
+    
+    ```zig title="Database Connection Proxy"
+    const DatabaseConnection = struct {
+        const Self = @This();
+        
+        connection: ?std.net.Server.Connection = null,
+        cache: std.StringHashMap([]const u8),
+        
+        pub fn query(self: *Self, sql: []const u8) ![]const u8 {
+            // Check cache first
+            if (self.cache.get(sql)) |cached_result| {
+                return cached_result;
+            }
+            
+            // Lazy initialization of connection
+            if (self.connection == null) {
+                self.connection = try self.connect();
+            }
+            
+            // Execute query and cache result
+            const result = try self.executeQuery(sql);
+            try self.cache.put(sql, try allocator.dupe(u8, result));
+            
+            return result;
+        }
+        
+        fn connect(self: *Self) !std.net.Server.Connection {
+            // Expensive connection establishment
+            return try DatabaseDriver.connect("localhost:5432");
+        }
+    };
+    ```
 
 #### Composite Pattern
 
-Compose objects into tree structures to represent part-whole hierarchies.
-
-**Use Cases:**
-
-- UI hierarchies
-- File systems
-- Organization structures
+!!! card "🌳 Composite"
+    
+    Compose objects into tree structures to represent part-whole hierarchies.
+    
+    **Use Cases:**
+    
+    - UI hierarchies
+    - File systems
+    - Organization structures
+    
+    **File System Example:**
+    
+    ```zig title="File System Composite"
+    const FileSystemNode = struct {
+        const Self = @This();
+        const VTable = struct {
+            getNameFn: *const fn (*anyopaque) []const u8,
+            getSizeFn: *const fn (*anyopaque) u64,
+            addFn: *const fn (*anyopaque, *Self) anyerror!void,
+            removeFn: *const fn (*anyopaque, *Self) anyerror!void,
+            getChildrenFn: *const fn (*anyopaque) []const *Self,
+        };
+        
+        ptr: *anyopaque,
+        vtable: *const VTable,
+        
+        pub fn getName(self: Self) []const u8 {
+            return self.vtable.getNameFn(self.ptr);
+        }
+        
+        pub fn getSize(self: Self) u64 {
+            return self.vtable.getSizeFn(self.ptr);
+        }
+    };
+    
+    const File = struct {
+        name: []const u8,
+        size: u64,
+        
+        fn getName(self: *anyopaque) []const u8 {
+            return @as(*File, @ptrCast(self)).name;
+        }
+        
+        fn getSize(self: *anyopaque) u64 {
+            return @as(*File, @ptrCast(self)).size;
+        }
+    };
+    
+    const Directory = struct {
+        name: []const u8,
+        children: std.ArrayList(*FileSystemNode),
+        
+        fn getName(self: *anyopaque) []const u8 {
+            return @as(*Directory, @ptrCast(self)).name;
+        }
+        
+        fn getSize(self: *anyopaque) u64 {
+            const dir = @as(*Directory, @ptrCast(self));
+            var total_size: u64 = 0;
+            for (dir.children.items) |child| {
+                total_size += child.getSize();
+            }
+            return total_size;
+        }
+        
+        fn add(self: *anyopaque, node: *FileSystemNode) !void {
+            const dir = @as(*Directory, @ptrCast(self));
+            try dir.children.append(node);
+        }
+    };
+    ```
 
 ### Behavioral Patterns
 
