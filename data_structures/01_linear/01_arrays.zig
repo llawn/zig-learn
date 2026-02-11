@@ -14,7 +14,6 @@ pub fn main() !void {
   try dynamicArrays(allocator);
   multiDimensional();
   try circularArrays();
-  try sparseArrays(allocator);
 }
 
 // ============================================================================
@@ -81,46 +80,46 @@ fn multiDimensional() void {
 // CIRCULAR ARRAYS (Ring Buffer - FIFO)
 // ============================================================================
 
-pub fn CircularBuffer(comptime T: type, comptime size: usize) type {
+pub fn CircularBuffer(comptime T: type, comptime capacity: usize) type {
   return struct {
-    data: [size]T = undefined,
+    data: [capacity]T = undefined,
     head: usize = 0,
     tail: usize = 0,
-    count: usize = 0,
+    size: usize = 0,
 
     const Self = @This();
 
     pub fn append(self: *Self, item: T) !void {
-      if (self.count == size) return error.BufferFull;
+      if (self.size == capacity) return error.BufferFull;
       self.data[self.head] = item;
-      self.head = (self.head + 1) % size;
-      self.count += 1;
+      self.head = (self.head + 1) % capacity;
+      self.size += 1;
     }
 
     pub fn pop(self: *Self) ?T {
-      if (self.count == 0) return null;
+      if (self.size == 0) return null;
       const item = self.data[self.tail];
-      self.tail = (self.tail + 1) % size;
-      self.count -= 1;
+      self.tail = (self.tail + 1) % capacity;
+      self.size -= 1;
       return item;
     }
 
     pub fn at(self: *const Self, index: usize) ?T {
-      if (index >= self.count) return null;
-      return self.data[(self.tail + index) % size];
+      if (index >= self.size) return null;
+      return self.data[(self.tail + index) % capacity];
     }
 
     pub fn len(self: *const Self) usize {
-      return self.count;
+      return self.size;
     }
 
     pub fn format(self: Self, writer: anytype) !void {
       try writer.writeAll("{ ");
       var i: usize = 0;
-      while (i < self.count) : (i += 1) {
-        const idx = (self.tail + i) % size;
+      while (i < self.size) : (i += 1) {
+        const idx = (self.tail + i) % capacity;
         try writer.print("{}", .{self.data[idx]});
-        if (i + 1 < self.count) try writer.writeAll(", ");
+        if (i + 1 < self.size) try writer.writeAll(", ");
       }
       try writer.writeAll(" }");
     }
@@ -138,77 +137,4 @@ fn circularArrays() !void {
   _ = ring.pop();
   try ring.append(5);
   std.debug.print("Circular Array (FIFO order): {f}\n", .{ring});
-}
-
-// ============================================================================
-// SPARSE ARRAYS & MATRICES
-// ============================================================================
-fn sparseArrays(allocator: std.mem.Allocator) !void {
-  std.debug.print("Sparse Structures\n", .{});
-
-  var sparse = std.AutoHashMap(u32, i32).init(allocator);
-  defer sparse.deinit();
-
-  try sparse.put(99999, 777);
-  std.debug.print(
-    "Sparse value at index 99999: {d}\n",
-    .{sparse.get(99999).?},
-  );
-
-  var matrix = SparseMatrix(f32).init();
-  defer matrix.deinit(allocator);
-
-  try matrix.set(allocator, 10, 20, 3.14);
-  if (matrix.get(10, 20)) |v| {
-    std.debug.print("Sparse Matrix (10,20): {d:.2}\n", .{v});
-  }
-}
-
-// ============================================================================
-// SPARSE MATRIX TYPE
-// ============================================================================
-pub fn SparseMatrix(comptime T: type) type {
-  return struct {
-    indices: std.ArrayList(Key) = .{},
-    values: std.ArrayList(T) = .{},
-    lookup: std.AutoHashMap(Key, usize),
-
-    const Self = @This();
-    const Key = struct { x: u32, y: u32 };
-
-    pub fn init() Self {
-      return .{
-        .lookup = std.AutoHashMap(Key, usize).init(std.heap.page_allocator),
-      };
-    }
-
-    pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
-      self.indices.deinit(allocator);
-      self.values.deinit(allocator);
-      self.lookup.deinit();
-    }
-
-    pub fn set(
-      self: *Self,
-      allocator: std.mem.Allocator,
-      x: u32,
-      y: u32,
-      value: T,
-    ) !void {
-      const key = Key{ .x = x, .y = y };
-      if (self.lookup.get(key)) |idx| {
-        self.values.items[idx] = value;
-      } else {
-        const idx = self.values.items.len;
-        try self.indices.append(allocator, key);
-        try self.values.append(allocator, value);
-        try self.lookup.put(key, idx);
-      }
-    }
-
-    pub fn get(self: Self, x: u32, y: u32) ?T {
-      const idx = self.lookup.get(.{ .x = x, .y = y }) orelse return null;
-      return self.values.items[idx];
-    }
-  };
 }

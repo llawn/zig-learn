@@ -10,7 +10,6 @@ In Zig, arrays can be categorized into several types:
 - **Dynamic Arrays** - Resizable arrays using ArrayList
 - **Multi-dimensional Arrays** - Arrays of arrays (matrices, tensors)
 - **Circular Arrays** - Ring buffers for fixed-size circular storage
-- **Sparse Arrays** - Memory-efficient arrays for mostly empty data
 
 ## Implementation
 
@@ -89,70 +88,61 @@ const tensor3 = [2][2][3]u8{
 
 Fixed-size circular buffer for efficient FIFO operations:
 
-```zig title="Ring Buffer Implementation"
-pub fn CircularBuffer(comptime T: type, comptime size: usize) type {
-  return struct {
-    data: [size]T = undefined,     // Storage
-    head: usize = 0,               // Read position
-    tail: usize = 0,               // Write position
-    count: usize = 0,              // Current elements
+#### Structure Definition
 
-    const Self = @This();
+| Property | Type | Description |
+| --- | --- | --- |
+| `data` | `size[T]` | The actual array. |
+| `head` | `usize` | First element (access). |
+| `tail` | `usize` | Last element (`append`). |
+| `count` | `usize` | The number of elements currently in the array. |
 
-    // Write at tail
-    pub fn append(self: *Self, item: T) !void {
-      ...
-    }
+#### Methods
 
-    // Read at head
-    pub fn pop(self: *Self) ?T {
-      if (self.count == 0) return null;
+| Method | Description |
+| --- | --- |
+| `pop` | Creates a new list instance with a given allocator. |
+| `append` | Frees all nodes and marks the list as `undefined`. |
+| `at` | Inserts a new element at the end of the list. |
+| `format` | Inserts a new element at the start of the list. |
 
-      const item = self.data[self.head];    // Read from head
-      self.head = (self.head + 1) % capacity;   // Wrap around
-      self.count -= 1;                 // Update count
-      return item;
-    }
-  };
-}
-```
 
 !!! tip "Use Cases"
-Perfect for audio buffers, network packets, and producer-consumer patterns.
 
-### Sparse Arrays
-
-Memory-efficient arrays for mostly empty data using hash maps:
-
-```zig
-var sparse = std.AutoHashMap(u32, i32).init(allocator);
-defer sparse.deinit();
-
-try sparse.put(99999, 777);
-```
+  Perfect for audio buffers, network packets, and producer-consumer patterns.
 
 ## Performance Analysis
 
-| Array Type | Access | Insert | Delete | Memory | Use Case |
-|------------|--------|--------|--------|---------|----------|
-| Static | O(1) | N/A | N/A | O(n) | Fixed-size data |
-| Dynamic | O(1) | O(1)\* | O(n) | O(n) | Variable data |
-| Circular | O(1) | O(1) | O(1) | O(k) | Fixed buffer |
-| Sparse | O(1) | O(1) | O(1) | O(m) | Sparse data |
+For arrays this are common complexity.
 
-\*Amortized for ArrayList append
+| Access | Insert | Delete | Search |
+|--------|--------|--------|--------|
+| $O(1)$ | $O(n)$ | $O(n)$ | $O(n)$ |
+
+!!! note "Deletion and Insertion"
+
+  Deletions and insertions operations can be performed in $O(n)$,
+  because removing or adding an element requires shifting all subsequent elements
+  to close the gap or make space.
+  To be $O(1)$ we can leave a gap on deletion or delete/insert at the end with
+  `pop()` and `append()` methods.
+
+  For dynamic arrays, insertions is **Amortized $O(1)$** because it occasionally takes
+  $O(n)$ time to resize the underlying before. While `size` is the number of elements
+  currently in the array, `capacity` is the amount of physical memory space actually allocated.
+  When the`size` reaches `capacity`, the dynamic array has no more contiguous "slots" to use
+  (this is essential for $O(1)$ access time). The systems identifies a new element is being
+  added to the full array. It asks the OS for a completely new larger block of memory (usually 1.5x - 2.0x former capacity).
 
 ## Common Operations
 
-### Common Operations
-
 !!! example "Traversal"
 
-```zig title="Iterating Over Arrays"
-// Simple iteration
-for (array) |item| {
-  std.debug.print("Item: {}\n", .{item});
-}
+  ```zig title="Iterating Over Arrays"
+  // Simple iteration
+  for (array) |item| {
+    std.debug.print("Item: {}\n", .{item});
+  }
 
   // With index
   for (array, 0..) |item, index| {
@@ -163,65 +153,55 @@ for (array) |item| {
   for (array) |*item| {
     item.* *= 2;  // Double each element
   }
-```
+  ```
 
 !!! example "Search"
 
-```zig title="Finding Elements"
-const target = 42;
-var found_index: ?usize = null;
+  ```zig title="Finding Elements"
+  const target = 42;
+  var found_index: ?usize = null;
 
-// Linear search
-for (array, 0..) |item, index| {
-  if (item == target) {
-    found_index = index;
-    break;
+  // Linear search
+  for (array, 0..) |item, index| {
+    if (item == target) {
+      found_index = index;
+      break;
+    }
   }
-}
 
   // Using std.mem.indexOf
   if (std.mem.indexOfScalar(u32, &array, target)) |idx| {
     std.debug.print("Found at index {}\n", .{idx});
   }
-```
+  ```
 
 !!! example "Modification"
 
-```zig title="Array Operations"
-// Direct assignment (bounds checked in safe mode)
-array[0] = 100;
+  ```zig title="Array Operations"
+  // Direct assignment (bounds checked in safe mode)
+  array[0] = 100;
 
-// Slice modification
-const slice = array[1..4];
-for (slice, 0..) |*item, i| {
-  item.* = @intCast(i * 10);  // Safe cast
-}
+  // Slice modification
+  const slice = array[1..4];
+  for (slice, 0..) |*item, i| {
+    item.* = @intCast(i * 10);  // Safe cast
+  }
 
-// Copy between arrays
-var dest: [array.len]u32 = undefined;
-@memcpy(&dest, &array);  // Built-in memory copy
-```
+  // Copy between arrays
+  var dest: [array.len]u32 = undefined;
+  @memcpy(&dest, &array);  // Built-in memory copy
+  ```
 
 ## Best Practices
 
 - **Use static arrays** when size is known at compile time
 - **Prefer ArrayList** for dynamic arrays with frequent appends
-- **Consider circular buffers** for fixed-size FIFO queues
 - **Use sparse arrays** for data with many empty slots
 - **Always check bounds** in safe build modes
 
-## Zig-Specific Advantages
-
-- **Compile-time bounds checking** in safe modes
-- **Zero-cost abstractions** for generic array types
-- **Explicit memory management** for dynamic arrays
-- **Comptime evaluation** for array initialization
-- **Slice safety** with runtime bounds checking
-
-## Running the Examples
+## Running the Example
 
 ```bash
 zig run data_structures/01_linear/01_arrays.zig
 ```
 
-This will demonstrate all array types with practical examples and output.
