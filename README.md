@@ -46,15 +46,14 @@ This repository serves as a personal laboratory.
 - [x] **Dynamic Arrays**: Resizable, memory management
 - [x] **Multi-dimensional Arrays**: Matrices, tensors
 - [x] **Circular Arrays**: Buffer implementations
-- [x] **Sparse Arrays**: Memory-efficient for mostly empty data
 
 #### 2. Linked Lists
 
-- [ ] **Singly Linked Lists**: Basic pointer chain
-- [ ] **Doubly Linked Lists**: Bidirectional traversal
-- [ ] **Circular Linked Lists**: Loop termination detection
-- [ ] **Skip Lists**: Probabilistic search structures
-- [ ] **Self-organizing Lists**: Access frequency optimization
+- [x] **Singly Linked Lists**: Basic pointer chain
+- [x] **Doubly Linked Lists**: Bidirectional traversal
+- [x] **Circular Linked Lists**: Loop termination detection
+- [x] **Skip Lists**: Probabilistic search structures
+- [x] **Self-organizing Lists**: Access frequency optimization
 
 #### 3. Stacks
 
